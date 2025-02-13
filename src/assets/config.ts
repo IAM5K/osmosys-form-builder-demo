@@ -186,6 +186,10 @@ export const configs = {
                       "value": "Validation Missing Value"
                     }
                   ],
+                  "overrides": {
+                    "options": "getCountryOptions",
+                    "placeholder": "getPlaceHolder",
+                   },
                   "validations": [
                     {
                       "name": "required",

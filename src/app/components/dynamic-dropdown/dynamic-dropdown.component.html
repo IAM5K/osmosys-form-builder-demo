@@ -1,0 +1,11 @@
+<div class="container">
+  <h3>Dynamic Dropdown Form</h3>
+  <osmosys-form
+    [formJsonData]="previewData"
+    [modelData]="formData"
+    [overrides]="overrides"
+    (formSubmit)="onFormSubmit($event)"
+    (buttonAction)="onButtonAction($event.action, $event.form)"
+  >
+  </osmosys-form>
+</div>

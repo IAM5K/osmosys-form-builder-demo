@@ -5,11 +5,13 @@ import { RouterOutlet } from '@angular/router';
 import { NgJsonEditorModule } from 'ang-jsoneditor';
 import { OsmosysFormComponent } from '../../../../../osmosys-form-builder/dist/osmosys-form';
 import { configs } from '../../../assets/config';
+import { of } from 'rxjs';
+import { delay } from 'rxjs/operators';
 
 @Component({
   selector: 'app-viewform',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterOutlet, NgJsonEditorModule, OsmosysFormComponent,],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterOutlet, NgJsonEditorModule, OsmosysFormComponent],
   templateUrl: './viewform.component.html',
   styleUrl: './viewform.component.scss'
 })
@@ -28,32 +30,31 @@ export class ViewformComponent implements OnInit {
 
   showPreview = true;
 
-  formData: any = { // Data object for ngModel
+  formData: any = {
     name: 'John Doe',
     email: 'john.doe@example.com',
     feedback: 'This is a sample feedback'
   };
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   returnConfig(input: string): any {
-    switch(input) {
-      case ('Simple Form'):
+    switch (input) {
+      case 'Simple Form':
         return configs.simpleForm;
-      case ('addBatches'):
+      case 'addBatches':
         return configs.addBatches;
-      case ('addExamCreation'):
+      case 'addExamCreation':
         return configs.addExamCreation;
-      case ('addQuestion'):
+      case 'addQuestion':
         return configs.addQuestion;
-      case ('addQuestionPaper'):
+      case 'addQuestionPaper':
         return configs.addQuestionPaper;
-      case ('addSection'):
+      case 'addSection':
         return configs.addSection;
-      case ('addService'):
+      case 'addService':
         return configs.addService;
-      case ('addSubSection'):
+      case 'addSubSection':
         return configs.addSubSection;
     }
     return false;
@@ -77,6 +78,20 @@ export class ViewformComponent implements OnInit {
       console.error('Invalid JSON format:', error);
     }
   }
+
+  // Dummy function to mimic an API call
+  getCountryOptionsFromApi() {
+    return of([
+      { label: 'USA', value: 'USA' },
+      { label: 'Canada', value: 'Canada' },
+      { label: 'Mexico', value: 'Mexico' }
+    ]).pipe(delay(1000)); // Simulate a delay of 1 second
+  }
+
+  overrides = {
+    getCountryOptions: () => this.getCountryOptionsFromApi(),
+    getPlaceHolder: () => 'Select a country'
+  };
 
   onFormSubmit(data: any) {
     console.log('Form submitted:', data);

@@ -14,6 +14,7 @@
   <osmosys-form *ngIf="showPreview"
                 [formJsonData]="previewData"
                 [modelData]="formData"
+                [overrides]="overrides"
                 (formSubmit)="onFormSubmit($event)"
                 (buttonAction)="onButtonAction($event.action, $event.form)">
   </osmosys-form>
