@@ -111,9 +111,18 @@ export class DynamicDropdownComponent implements OnInit {
   };
 
   overrides: { [key: string]: any } = {
-    getCountryOptions: () => this.getCountryOptions(),
-    getStateOptions: (country: string) => this.getStateOptions(country),
-    getCityOptions: (state: string) => this.getCityOptions(state),
+    getCountryOptions: () => {
+      console.log('Override mapping: getCountryOptions called');
+      return this.getCountryOptions();
+    },
+    getStateOptions: (parentValue: string) => {
+      console.log(`Override mapping: getStateOptions called with parentValue: ${parentValue}`);
+      return this.getStateOptions(parentValue);
+    },
+    getCityOptions: (parentValue: string) => {
+      console.log(`Override mapping: getCityOptions called with parentValue: ${parentValue}`);
+      return this.getCityOptions(parentValue);
+    },
   };
   previewData: any;
   formData: any;
@@ -133,9 +142,14 @@ export class DynamicDropdownComponent implements OnInit {
     ]).pipe(delay(1000)); // Simulate a delay of 1 second
   }
 
-  // Dummy function to mimic an API call for state options based on selected country
-  getStateOptions(country: string) {
-    console.log(`Fetching state options for country: ${country}`);
+  // Dummy function to mimic an API call for state options based on the parent's selected value
+  getStateOptions(parentValue: string) {
+    // Validate that the parent's selected value is one of the expected country codes
+    if (!['USA', 'Canada', 'Mexico'].includes(parentValue)) {
+      console.warn(`Invalid parent value for state dropdown: ${parentValue}. Returning empty options.`);
+      return of([]).pipe(delay(1000));
+    }
+    console.log(`Fetching state options for country: ${parentValue}`);
     const states: { [key: string]: { label: string; value: string }[] } = {
       USA: [
         { label: 'California', value: 'CA' },
@@ -153,12 +167,18 @@ export class DynamicDropdownComponent implements OnInit {
         { label: 'Puebla', value: 'PU' },
       ],
     };
-    return of(states[country] || []).pipe(delay(1000)); // Simulate a delay of 1 second
+    return of(states[parentValue] || []).pipe(delay(1000));
   }
 
-  // Dummy function to mimic an API call for city options based on selected state
-  getCityOptions(state: string) {
-    console.log(`Fetching city options for state: ${state}`);
+  // Dummy function to mimic an API call for city options based on the parent's selected value
+  getCityOptions(parentValue: string) {
+    // Validate that the parent's selected value is one of the expected state codes
+    const validStates = ['CA', 'TX', 'NY', 'ON', 'QC', 'BC', 'JA', 'NL', 'PU'];
+    if (!validStates.includes(parentValue)) {
+      console.warn(`Invalid parent value for city dropdown: ${parentValue}. Returning empty options.`);
+      return of([]).pipe(delay(1000));
+    }
+    console.log(`Fetching city options for state: ${parentValue}`);
     const cities: { [key: string]: { label: string; value: string }[] } = {
       CA: [
         { label: 'Los Angeles', value: 'LA' },
@@ -206,7 +226,7 @@ export class DynamicDropdownComponent implements OnInit {
         { label: 'Atlixco', value: 'ATL' },
       ],
     };
-    return of(cities[state] || []).pipe(delay(1000)); // Simulate a delay of 1 second
+    return of(cities[parentValue] || []).pipe(delay(1000));
   }
 
   onFormSubmit(data: any) {
@@ -225,6 +245,7 @@ export class DynamicDropdownComponent implements OnInit {
   eventHandlers = {
     change: (event: Event) => this.handleEvent(event.type, event),
   };
+
   handleEvent(eventName: string, event: Event): void {
     console.log(`Event triggered: ${eventName}`);
     const target = event.target as HTMLSelectElement;
@@ -245,6 +266,7 @@ export class DynamicDropdownComponent implements OnInit {
       }
     }
   }
+  
   findDependentElement(elementName: string): any {
     for (const row of this.formConfig.layout.rows) {
       for (const column of row.columns) {
