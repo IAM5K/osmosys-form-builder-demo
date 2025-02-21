@@ -6,6 +6,7 @@ import { NgJsonEditorModule } from 'ang-jsoneditor';
 import { OsmosysFormComponent } from 'osmosys-form';
 import { of } from 'rxjs';
 import { delay } from 'rxjs/operators';
+import { formConfig } from './dynamic-dropdown.data';
 
 @Component({
   selector: 'app-dynamic-dropdown',
@@ -21,94 +22,11 @@ import { delay } from 'rxjs/operators';
   styleUrls: ['./dynamic-dropdown.component.scss'],
 })
 export class DynamicDropdownComponent implements OnInit {
-  formConfig = {
-    title: {
-      text: 'Dynamic Dropdown Form',
-      class: 'text-center mb-4',
-    },
-    layout: {
-      type: 'grid',
-      rows: [
-        {
-          columns: [
-            {
-              span: 12,
-              elements: [
-                {
-                  type: 'select',
-                  label: 'Country',
-                  name: 'country',
-                  options: [],
-                  overrides: {
-                    options: 'getCountryOptions',
-                  },
-                  validations: [
-                    {
-                      name: 'required',
-                      validator: 'required',
-                      message: 'Country is required',
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          columns: [
-            {
-              span: 12,
-              elements: [
-                {
-                  type: 'select',
-                  label: 'State',
-                  name: 'state',
-                  options: [],
-                  overrides: {
-                    options: 'getStateOptions',
-                  },
-                  validations: [
-                    {
-                      name: 'required',
-                      validator: 'required',
-                      message: 'State is required',
-                    },
-                  ],
-                  dependentOn: 'country',
-                },
-              ],
-            },
-          ],
-        },
-        {
-          columns: [
-            {
-              span: 12,
-              elements: [
-                {
-                  type: 'select',
-                  label: 'City',
-                  name: 'city',
-                  options: [],
-                  overrides: {
-                    options: 'getCityOptions',
-                  },
-                  validations: [
-                    {
-                      name: 'required',
-                      validator: 'required',
-                      message: 'City is required',
-                    },
-                  ],
-                  dependentOn: 'state',
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  };
+  // Add property to capture event logs
+  eventLogs: string[] = [];
+
+  // Updated form configuration with events for testing focus and blur
+  formConfig = formConfig
 
   overrides: { [key: string]: any } = {
     getCountryOptions: () => {
@@ -243,30 +161,63 @@ export class DynamicDropdownComponent implements OnInit {
     }
   }
   eventHandlers = {
-    change: (event: Event) => this.handleEvent(event.type, event),
+    change: (event: Event) => this.handleChange(event),
+    focus: (event: Event) => this.handleFocus(event),
+    blur: (event: Event) => this.handleBlur(event)
   };
 
-  handleEvent(eventName: string, event: Event): void {
-    console.log(`Event triggered: ${eventName}`);
+  handleChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
-    const elementName = target.name;
+    const elementName = target.getAttribute('id') || target.getAttribute('name') || '';
     const selectedValue = target.value;
-    console.log(`Element name: ${elementName}, Selected value: ${selectedValue}`);
-    // Find the element with the dependent dropdown
+    console.log(`[Change] Element: ${elementName}, Selected value: ${selectedValue}`);
+    this.eventLogs.push(`[Change] ${elementName}: ${selectedValue}`);
+    this.triggerDependentOverride(elementName, selectedValue);
+  }
+
+  handleFocus(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const elementName = target.getAttribute('id') || target.getAttribute('name') || '';
+    console.log(`[Focus] Element: ${elementName} gained focus`);
+    this.eventLogs.push(`[Focus] ${elementName} gained focus`);
+    this.cdr.detectChanges();
+  }
+
+  handleBlur(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const elementName = target.getAttribute('id') || target.getAttribute('name') || '';
+    console.log(`[Blur] Element: ${elementName} lost focus`);
+    this.eventLogs.push(`[Blur] ${elementName} lost focus`);
+    this.cdr.detectChanges();
+  }
+
+  triggerDependentOverride(elementName: string, selectedValue: string) {
     const dependentElement = this.findDependentElement(elementName);
     if (dependentElement) {
       console.log(`Found dependent element: ${dependentElement.name}`);
-      const overrideFunction = this.overrides[dependentElement.overrides.options];
-      if (overrideFunction) {
-        overrideFunction(selectedValue).subscribe((data: any) => {
-          console.log(`Fetched options for ${dependentElement.name}:`, data);
-          dependentElement.options = data;
-          this.cdr.detectChanges();
-        });
+      const overrideKey = dependentElement.overrides ? dependentElement.overrides.options : undefined;
+      if (overrideKey) {
+        const overrideFunction = this.overrides[overrideKey];
+        if (overrideFunction) {
+          console.log(`Triggering override for dependent element '${dependentElement.name}' with selected value: ${selectedValue}`);
+          overrideFunction(selectedValue).subscribe((data: any) => {
+            console.log(`Fetched options for ${dependentElement.name}:`, data);
+            dependentElement.options = data;
+            this.cdr.detectChanges();
+          }, (error: Error) => {
+            console.error(`Error fetching options for ${dependentElement.name}:`, error);
+          });
+        } else {
+          console.warn(`No override function found for key '${overrideKey}' on dependent element: ${dependentElement.name}`);
+        }
+      } else {
+        console.warn(`Dependent element '${dependentElement.name}' does not have an override configuration for options.`);
       }
+    } else {
+      console.log(`No dependent element found for element: ${elementName}`);
     }
   }
-  
+
   findDependentElement(elementName: string): any {
     for (const row of this.formConfig.layout.rows) {
       for (const column of row.columns) {
@@ -279,4 +230,5 @@ export class DynamicDropdownComponent implements OnInit {
     }
     return null;
   }
+  
 }
